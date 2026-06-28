@@ -1,0 +1,53 @@
+# Unreal Engine generated directories
+**/Binaries/
+**/DerivedDataCache/
+**/Intermediate/
+**/Saved/
+**/bin/
+**/obj/
+
+# Packaged builds and staging metadata
+Build/**/*.app/
+Build/**/*.ipa
+Build/**/*.apk
+Build/**/*.aab
+Build/**/*.pak
+Build/**/*.ucas
+Build/**/*.utoc
+Build/**/FileOpenOrder/
+Build/**/*.PackageVersionCounter
+
+# Generated project and IDE files
+.idea/
+.vs/
+.vscode/
+*.code-workspace
+*.sln
+*.suo
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+*.xcodeproj/
+*.xcworkspace/
+*.uproject.DotSettings.user
+/Makefile
+/CMakeLists.txt
+
+# Local tooling output
+/dotnet/
+
+# OS and editor metadata
+.DS_Store
+Thumbs.db
+Desktop.ini
+*~
+*.tmp
+*.swp
+*.swo
+
+# Crash dumps
+core
+core.*
+vgcore.*
+*.dmp

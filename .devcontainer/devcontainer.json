@@ -1,0 +1,43 @@
+{
+  "name": "Lyra Linux Dedicated Server Build",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "remoteUser": "vscode",
+  "updateRemoteUserUID": true,
+  "runArgs": [
+    "--platform=linux/amd64",
+    "--init",
+    "--security-opt=seccomp=unconfined",
+    "--shm-size=8g"
+  ],
+  "mounts": [
+    "source=/Users/wdazhi/Documents/GitHub/UnrealEngine,target=/opt/unreal-engine,type=bind,consistency=cached",
+    "source=lyra-linux-ddc,target=/home/vscode/.cache/UnrealEngine,type=volume"
+  ],
+  "remoteEnv": {
+    "UE_ENGINE_ROOT": "/opt/unreal-engine",
+    "UE_PROJECT_FILE": "${containerWorkspaceFolder}/LyraStarterGame.uproject",
+    "UE_SERVER_TARGET": "LyraServer"
+  },
+  "postCreateCommand": "bash .devcontainer/scripts/check-unreal.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools"
+      ],
+      "settings": {
+        "C_Cpp.default.compileCommands": "${workspaceFolder}/.vscode/compileCommands_Linux.json",
+        "files.watcherExclude": {
+          "**/Binaries/**": true,
+          "**/DerivedDataCache/**": true,
+          "**/Intermediate/**": true,
+          "**/Saved/**": true
+        }
+      }
+    }
+  }
+}
