@@ -37,6 +37,7 @@ Build/**/*.PackageVersionCounter
 
 # Local tooling output
 /dotnet/
+Source/ThirdParty/ExternalAIGrpc/*/lib/
 
 # OS and editor metadata
 .DS_Store
