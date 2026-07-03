@@ -25,6 +25,8 @@ RUN_UAT="${UE_ENGINE_ROOT}/Engine/Build/BatchFiles/RunUAT.sh"
 BUILD_SH="${UE_ENGINE_ROOT}/Engine/Build/BatchFiles/Linux/Build.sh"
 SETUP_SH="${UE_ENGINE_ROOT}/Setup.sh"
 LINUX_SETUP_SH="${UE_ENGINE_ROOT}/Engine/Build/BatchFiles/Linux/Setup.sh"
+EXTERNAL_AI_GRPC_BUILD_SH="${PROJECT_ROOT}/Source/ThirdParty/ExternalAIGrpc/1.72.0/BuildForUE/Linux/BuildForLinux.sh"
+EXTERNAL_AI_GRPC_LIBRARY="${PROJECT_ROOT}/Source/ThirdParty/ExternalAIGrpc/1.72.0/lib/Unix/x86_64-unknown-linux-gnu/Release/libgrpc++.a"
 
 usage() {
   cat <<EOF
@@ -32,7 +34,7 @@ Usage: $0 <command> [extra Unreal args]
 
 Commands:
   check           Verify Unreal Engine and project paths.
-  prepare         Set up Linux and build the cook tools and LyraEditor.
+  prepare         Set up Linux, build Linux third-party libraries, cook tools, and LyraEditor.
   build           Compile the Linux dedicated server target. Defaults: UE_SERVER_TARGET=${SERVER_TARGET}, UE_CONFIG=${CONFIG}.
   package         Build, cook, stage, pak, and archive the Linux dedicated server.
   server          Alias for build.
@@ -69,6 +71,11 @@ require_package_tools() {
 
   if [ ! -f "${PROJECT_ROOT}/Binaries/Linux/LyraEditor.target" ]; then
     echo "error: Linux LyraEditor target is missing: Binaries/Linux/LyraEditor.target" >&2
+    missing=1
+  fi
+
+  if [ ! -f "${EXTERNAL_AI_GRPC_LIBRARY}" ]; then
+    echo "error: Linux ExternalAIGrpc library is missing: ${EXTERNAL_AI_GRPC_LIBRARY}" >&2
     missing=1
   fi
 
@@ -111,7 +118,12 @@ case "${command}" in
 
   prepare)
     require_file "${LINUX_SETUP_SH}"
-    bash "${LINUX_SETUP_SH}"
+    require_file "${EXTERNAL_AI_GRPC_BUILD_SH}"
+    GIT_CONFIG_COUNT=1 \
+      GIT_CONFIG_KEY_0=safe.directory \
+      GIT_CONFIG_VALUE_0="${UE_ENGINE_ROOT}" \
+      bash "${LINUX_SETUP_SH}"
+    bash "${EXTERNAL_AI_GRPC_BUILD_SH}"
     run_engine_build ShaderCompileWorker "$@"
     run_engine_build UnrealPak "$@"
     run_build LyraEditor "$@"

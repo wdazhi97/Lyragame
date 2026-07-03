@@ -26,4 +26,7 @@ Linux multi-architecture SDK. A library built by the host's default compiler
 and libstdc++ is not ABI-compatible with this module.
 
 Set `EXTERNAL_AI_GRPC_SOURCE_DIR` to reuse an existing gRPC v1.72.0 checkout,
-or `EXTERNAL_AI_GRPC_JOBS` to control parallel compilation.
+`EXTERNAL_AI_GRPC_CACHE_DIR` to override the Linux source/object cache, or
+`EXTERNAL_AI_GRPC_JOBS` to control parallel compilation. The Linux script
+defaults its cache to `~/.external-ai-grpc-cache`, which avoids slow
+Windows bind-mount I/O in a devcontainer.

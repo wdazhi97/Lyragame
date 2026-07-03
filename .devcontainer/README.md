@@ -62,7 +62,9 @@ tail -f Saved/BuildLogs/detached-build.log
 
 That downloads the Linux AutoSDK/toolchain required by
 `Engine/Config/Linux/Linux_SDK.json`, then builds `ShaderCompileWorker`,
-`UnrealPak`, and `LyraEditor`. The first run can take a long time.
+`UnrealPak`, `LyraEditor`, and the Linux ExternalAIGrpc static libraries. The
+first run can take a long time. Linux libraries are written under `lib/Unix`;
+the existing macOS libraries under `lib/Mac` are not modified.
 
 Use the detached runner for long builds so a VS Code Remote disconnect does
 not terminate them:
