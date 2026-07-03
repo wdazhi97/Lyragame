@@ -12,6 +12,7 @@ struct FGenericTeamId;
 
 class APlayerState;
 class UAIPerceptionComponent;
+class UExternalAIAgentComponent;
 class UObject;
 struct FFrame;
 
@@ -69,4 +70,8 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<APlayerState> LastSeenPlayerState;
+
+	/** Receives commands routed from the dedicated server's external AI bridge. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "External AI", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UExternalAIAgentComponent> ExternalAIAgentComponent;
 };

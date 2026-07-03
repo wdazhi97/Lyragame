@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package lyra.external_ai.v1;
+
+service ExternalAIService {
+  rpc Connect(stream EnvironmentMessage) returns (stream ControllerMessage);
+}
+
+message Vector3 {
+  double x = 1;
+  double y = 2;
+  double z = 3;
+}
+
+message Rotator {
+  double pitch = 1;
+  double yaw = 2;
+  double roll = 3;
+}
+
+message AgentState {
+  int64 agent_id = 1;
+  Vector3 location = 2;
+  Rotator rotation = 3;
+  Vector3 velocity = 4;
+  int32 team_id = 5;
+  bool has_controlled_pawn = 6;
+}
+
+message WorldState {
+  int64 snapshot_id = 1;
+  double server_time_seconds = 2;
+  repeated AgentState agents = 3;
+}
+
+message AgentCommand {
+  int64 agent_id = 1;
+  int64 sequence = 2;
+  int64 based_on_snapshot_id = 3;
+  string command_type = 4;
+  repeated float continuous_values = 5;
+  repeated int32 discrete_values = 6;
+}
+
+message AgentCommandBatch {
+  repeated AgentCommand commands = 1;
+}
+
+message ServerRegistration {
+  string server_name = 1;
+}
+
+message Heartbeat {
+  int64 unix_time_ms = 1;
+}
+
+message EnvironmentMessage {
+  oneof payload {
+    ServerRegistration registration = 1;
+    WorldState world_state = 2;
+    Heartbeat heartbeat = 3;
+  }
+}
+
+message ControllerMessage {
+  oneof payload {
+    AgentCommandBatch commands = 1;
+    Heartbeat heartbeat = 2;
+  }
+}

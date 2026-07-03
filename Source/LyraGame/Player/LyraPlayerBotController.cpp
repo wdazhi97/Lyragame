@@ -5,6 +5,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "Engine/World.h"
+#include "ExternalAI/ExternalAIAgentComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "GameModes/LyraGameMode.h"
 #include "LyraLogChannels.h"
@@ -19,6 +20,7 @@ ALyraPlayerBotController::ALyraPlayerBotController(const FObjectInitializer& Obj
 {
 	bWantsPlayerState = true;
 	bStopAILogicOnUnposses = false;
+	ExternalAIAgentComponent = CreateDefaultSubobject<UExternalAIAgentComponent>(TEXT("ExternalAIAgentComponent"));
 }
 
 void ALyraPlayerBotController::OnPlayerStateChangedTeam(UObject* TeamAgent, int32 OldTeam, int32 NewTeam)
@@ -179,4 +181,3 @@ void ALyraPlayerBotController::OnUnPossess()
 
 	Super::OnUnPossess();
 }
-
