@@ -5,14 +5,24 @@ It does not copy Unreal Engine into the image; it bind-mounts the local engine
 checkout:
 
 ```text
-/Users/wdazhi/Documents/GitHub/UnrealEngine -> /opt/unreal-engine
+<parent of this project>/UnrealEngine -> /opt/unreal-engine
 ```
 
 The container is pinned to `linux/amd64` because Unreal Engine's bundled Linux
 DotNet and build tools are x86_64 binaries.
 
-If your engine checkout is somewhere else, edit `.devcontainer/devcontainer.json`
-and change the first entry in `mounts`.
+On Windows, the default layout is:
+
+```text
+D:\WorkSpace\Lyragame
+D:\WorkSpace\UnrealEngine
+```
+
+The mount uses `${localWorkspaceFolder}/../UnrealEngine`, so it is independent
+of the Windows drive letter and user name. If your engine checkout is somewhere
+else, edit `.devcontainer/devcontainer.json` and change the first entry in
+`mounts`. Make sure that Docker Desktop is using Linux containers and can access
+the drive containing both directories.
 
 ## Commands
 
@@ -33,14 +43,15 @@ Useful environment overrides:
 
 ```bash
 UE_CONFIG=Shipping bash .devcontainer/scripts/build-linux.sh package
-UE_MAX_PARALLEL_ACTIONS=2 bash .devcontainer/scripts/build-linux.sh build
+UE_MAX_PARALLEL_ACTIONS=8 bash .devcontainer/scripts/build-linux.sh build
 UE_SERVER_TARGET=LyraServerSteam bash .devcontainer/scripts/build-linux.sh build
 UE_ARCHIVE_DIR=/workspaces/out/LyraLinuxServer bash .devcontainer/scripts/build-linux.sh package
 ```
 
-`package` defaults to `-NoUBA -NoDumpSyms -MaxParallelActions=2`, skips
-staging debug files, and uses partial garbage collection while cooking. This
-keeps peak memory lower when running the amd64 container on Apple Silicon.
+By default, UnrealBuildTool chooses compile concurrency from the CPU and memory
+available to the container. Set `UE_MAX_PARALLEL_ACTIONS` when you need to cap
+peak memory use. Packaging skips staging debug files and uses partial garbage
+collection while cooking.
 
 Before the first package, build the Linux cook tools and the project editor:
 

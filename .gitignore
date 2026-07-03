@@ -7,6 +7,7 @@
 **/obj/
 
 # Packaged builds and staging metadata
+/Build/LinuxServer/
 Build/**/*.app/
 Build/**/*.ipa
 Build/**/*.apk

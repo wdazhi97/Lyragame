@@ -14,7 +14,7 @@
     "--shm-size=8g"
   ],
   "mounts": [
-    "source=/Users/wdazhi/Documents/GitHub/UnrealEngine,target=/opt/unreal-engine,type=bind,consistency=cached",
+    "source=${localWorkspaceFolder}/../UnrealEngine,target=/opt/unreal-engine,type=bind",
     "source=lyra-linux-ddc,target=/home/vscode/.cache/UnrealEngine,type=volume"
   ],
   "remoteEnv": {

@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+if [ -z "${BASH_VERSION:-}" ]; then
+  exec bash "$0" "$@"
+fi
+
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -10,8 +14,12 @@ PLATFORM="${UE_PLATFORM:-Linux}"
 CONFIG="${UE_CONFIG:-Development}"
 SERVER_TARGET="${UE_SERVER_TARGET:-LyraServer}"
 ARCHIVE_DIR="${UE_ARCHIVE_DIR:-${PROJECT_ROOT}/Saved/Packages/${PLATFORM}Server-${CONFIG}}"
-MAX_PARALLEL_ACTIONS="${UE_MAX_PARALLEL_ACTIONS:-2}"
-UBT_ARGS="${UE_UBT_ARGS:--NoUBA -NoDumpSyms -MaxParallelActions=${MAX_PARALLEL_ACTIONS}}"
+MAX_PARALLEL_ACTIONS="${UE_MAX_PARALLEL_ACTIONS:-}"
+DEFAULT_UBT_ARGS="-NoUBA -NoDumpSyms"
+if [ -n "${MAX_PARALLEL_ACTIONS}" ]; then
+  DEFAULT_UBT_ARGS="${DEFAULT_UBT_ARGS} -MaxParallelActions=${MAX_PARALLEL_ACTIONS}"
+fi
+UBT_ARGS="${UE_UBT_ARGS:-${DEFAULT_UBT_ARGS}}"
 
 RUN_UAT="${UE_ENGINE_ROOT}/Engine/Build/BatchFiles/RunUAT.sh"
 BUILD_SH="${UE_ENGINE_ROOT}/Engine/Build/BatchFiles/Linux/Build.sh"
@@ -36,8 +44,8 @@ Environment overrides:
   UE_SERVER_TARGET Server target. Default: LyraServer
   UE_CONFIG       Build configuration. Default: Development
   UE_ARCHIVE_DIR  Package output directory. Default: ${ARCHIVE_DIR}
-  UE_MAX_PARALLEL_ACTIONS Max parallel compile actions. Default: 2
-  UE_UBT_ARGS     Extra UnrealBuildTool args. Default: -NoUBA -NoDumpSyms -MaxParallelActions=${MAX_PARALLEL_ACTIONS}
+  UE_MAX_PARALLEL_ACTIONS Limit parallel compile actions. Default: let UnrealBuildTool choose.
+  UE_UBT_ARGS     Extra UnrealBuildTool args. Default: ${DEFAULT_UBT_ARGS}
 EOF
 }
 
