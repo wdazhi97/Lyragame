@@ -5,6 +5,7 @@
 #include "ExternalAI/ExternalAIAgentComponent.h"
 #include "ExternalAI/ExternalAISettings.h"
 #include "ExternalAI/ExternalAITransport.h"
+#include "Engine/World.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/Pawn.h"
 #include "LyraLogChannels.h"
@@ -178,7 +179,7 @@ void UExternalAIWorldSubsystem::StopTransport()
 
 void UExternalAIWorldSubsystem::CollectAndSendWorldState()
 {
-	FExternalAIWorldState NewState;
+	lyra::external_ai::v1::WorldState NewState;
 	CollectWorldState(NewState);
 	LastCollectedWorldState = NewState;
 
@@ -188,13 +189,13 @@ void UExternalAIWorldSubsystem::CollectAndSendWorldState()
 	}
 }
 
-void UExternalAIWorldSubsystem::CollectWorldState(FExternalAIWorldState& OutWorldState)
+void UExternalAIWorldSubsystem::CollectWorldState(lyra::external_ai::v1::WorldState& OutWorldState)
 {
 	check(IsInGameThread());
 
-	OutWorldState.SnapshotId = NextSnapshotId++;
-	OutWorldState.ServerTimeSeconds = GetWorld()->GetTimeSeconds();
-	OutWorldState.Agents.Reserve(RegisteredAgents.Num());
+	OutWorldState.set_snapshot_id(NextSnapshotId++);
+	OutWorldState.set_server_time_seconds(GetWorld()->GetTimeSeconds());
+	OutWorldState.mutable_agents()->Reserve(RegisteredAgents.Num());
 
 	const ULyraTeamSubsystem* TeamSubsystem = GetWorld()->GetSubsystem<ULyraTeamSubsystem>();
 
@@ -207,20 +208,35 @@ void UExternalAIWorldSubsystem::CollectWorldState(FExternalAIWorldState& OutWorl
 			continue;
 		}
 
-		FExternalAIAgentState& AgentState = OutWorldState.Agents.AddDefaulted_GetRef();
-		AgentState.AgentId = Pair.Key;
-		AgentState.TeamId = TeamSubsystem ? TeamSubsystem->FindTeamFromObject(Controller) : INDEX_NONE;
+		lyra::external_ai::v1::AgentState* AgentState = OutWorldState.add_agents();
+		AgentState->set_agent_id(Pair.Key);
+		AgentState->set_team_id(TeamSubsystem ? TeamSubsystem->FindTeamFromObject(Controller) : INDEX_NONE);
 
 		if (const APawn* Pawn = Controller->GetPawn())
 		{
-			AgentState.bHasControlledPawn = true;
-			AgentState.Location = Pawn->GetActorLocation();
-			AgentState.Rotation = Pawn->GetActorRotation();
-			AgentState.Velocity = Pawn->GetVelocity();
+			AgentState->set_has_controlled_pawn(true);
+
+			const FVector Location = Pawn->GetActorLocation();
+			AgentState->mutable_location()->set_x(Location.X);
+			AgentState->mutable_location()->set_y(Location.Y);
+			AgentState->mutable_location()->set_z(Location.Z);
+
+			const FRotator Rotation = Pawn->GetActorRotation();
+			AgentState->mutable_rotation()->set_pitch(Rotation.Pitch);
+			AgentState->mutable_rotation()->set_yaw(Rotation.Yaw);
+			AgentState->mutable_rotation()->set_roll(Rotation.Roll);
+
+			const FVector Velocity = Pawn->GetVelocity();
+			AgentState->mutable_velocity()->set_x(Velocity.X);
+			AgentState->mutable_velocity()->set_y(Velocity.Y);
+			AgentState->mutable_velocity()->set_z(Velocity.Z);
 		}
 		else
 		{
-			AgentState.Rotation = Controller->GetControlRotation();
+			const FRotator Rotation = Controller->GetControlRotation();
+			AgentState->mutable_rotation()->set_pitch(Rotation.Pitch);
+			AgentState->mutable_rotation()->set_yaw(Rotation.Yaw);
+			AgentState->mutable_rotation()->set_roll(Rotation.Roll);
 		}
 	}
 }
@@ -232,46 +248,48 @@ void UExternalAIWorldSubsystem::ProcessReceivedCommands()
 		return;
 	}
 
-	FExternalAICommandBatch Batch;
+	lyra::external_ai::v1::AgentCommandBatch Batch;
 	while (Transport->DequeueCommand(Batch))
 	{
-		for (const FExternalAICommand& Command : Batch.Commands)
+		for (const lyra::external_ai::v1::AgentCommand& Command : Batch.commands())
 		{
 			RouteCommand(Command);
 		}
-		Batch.Commands.Reset();
+		Batch.Clear();
 	}
 }
 
-void UExternalAIWorldSubsystem::RouteCommand(const FExternalAICommand& Command)
+void UExternalAIWorldSubsystem::RouteCommand(const lyra::external_ai::v1::AgentCommand& Command)
 {
 	check(IsInGameThread());
 
-	FRegisteredAgent* Entry = RegisteredAgents.Find(Command.AgentId);
+	const int64 AgentId = Command.agent_id();
+	const int64 Sequence = Command.sequence();
+	FRegisteredAgent* Entry = RegisteredAgents.Find(AgentId);
 	if (!Entry)
 	{
-		UE_LOG(LogLyraExternalAI, Verbose, TEXT("Dropped command for unknown agent %lld"), Command.AgentId);
+		UE_LOG(LogLyraExternalAI, Verbose, TEXT("Dropped command for unknown agent %lld"), AgentId);
 		return;
 	}
 
-	if (Command.Sequence != 0 && Command.Sequence <= Entry->LastCommandSequence)
+	if (Sequence != 0 && Sequence <= Entry->LastCommandSequence)
 	{
 		UE_LOG(LogLyraExternalAI, VeryVerbose,
 			TEXT("Dropped stale command %lld for agent %lld (last %lld)"),
-			Command.Sequence, Command.AgentId, Entry->LastCommandSequence);
+			Sequence, AgentId, Entry->LastCommandSequence);
 		return;
 	}
 
 	UExternalAIAgentComponent* Component = Entry->Component.Get();
 	if (!Component)
 	{
-		RegisteredAgents.Remove(Command.AgentId);
+		RegisteredAgents.Remove(AgentId);
 		return;
 	}
 
-	if (Command.Sequence != 0)
+	if (Sequence != 0)
 	{
-		Entry->LastCommandSequence = Command.Sequence;
+		Entry->LastCommandSequence = Sequence;
 	}
 
 	Component->HandleExternalCommand(Command);

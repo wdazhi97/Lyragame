@@ -5,7 +5,6 @@
 #include "Subsystems/WorldSubsystem.h"
 
 #include "ExternalAI/ExternalAITransport.h"
-#include "ExternalAI/ExternalAITypes.h"
 
 #include "ExternalAIWorldSubsystem.generated.h"
 
@@ -39,7 +38,7 @@ public:
 	 */
 	void SetTransport(TUniquePtr<IExternalAITransport> InTransport);
 
-	const FExternalAIWorldState& GetLastCollectedWorldState() const { return LastCollectedWorldState; }
+	const lyra::external_ai::v1::WorldState& GetLastCollectedWorldState() const { return LastCollectedWorldState; }
 
 private:
 	struct FRegisteredAgent
@@ -52,16 +51,16 @@ private:
 	void StartTransport();
 	void StopTransport();
 	void CollectAndSendWorldState();
-	void CollectWorldState(FExternalAIWorldState& OutWorldState);
+	void CollectWorldState(lyra::external_ai::v1::WorldState& OutWorldState);
 	void ProcessReceivedCommands();
-	void RouteCommand(const FExternalAICommand& Command);
+	void RouteCommand(const lyra::external_ai::v1::AgentCommand& Command);
 	void RemoveInvalidAgents();
 	int64 AllocateAgentId();
 
 	TMap<int64, FRegisteredAgent> RegisteredAgents;
 	TUniquePtr<IExternalAITransport> Transport;
 
-	FExternalAIWorldState LastCollectedWorldState;
+	lyra::external_ai::v1::WorldState LastCollectedWorldState;
 
 	int64 NextAgentId = 0;
 	int64 NextSnapshotId = 1;

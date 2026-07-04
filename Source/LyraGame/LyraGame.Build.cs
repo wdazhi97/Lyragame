@@ -16,6 +16,7 @@ public class LyraGame : ModuleRules
 
 		PrivateIncludePaths.AddRange(
 			new string[] {
+				"LyraGame/ExternalAI/Generated"
 			}
 		);
 
@@ -74,6 +75,8 @@ public class LyraGame : ModuleRules
 				"EngineSettings",
 				"DTLSHandlerComponent",
 				"Json",
+				"Protobuf",
+				"ExternalAIGrpc",
 			}
 		);
 

@@ -14,15 +14,6 @@
 			]
 		},
 		{
-			"Name": "ExternalAIGrpcRuntime",
-			"Type": "ServerOnly",
-			"LoadingPhase": "Default",
-			"PlatformAllowList": [
-				"Mac",
-				"Linux"
-			]
-		},
-		{
 			"Name": "LyraEditor",
 			"Type": "Editor",
 			"LoadingPhase": "Default"

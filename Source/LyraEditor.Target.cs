@@ -13,7 +13,7 @@ public class LyraEditorTarget : TargetRules
 		// Linux server cooking runs in UnrealEditor-Cmd and loads ServerOnly
 		// project modules for the target platform. Build the server runtime
 		// module into the editor target so the cook host can load it.
-		ExtraModuleNames.AddRange(new string[] { "LyraGame", "LyraEditor", "ExternalAIGrpcRuntime" });
+		ExtraModuleNames.AddRange(new string[] { "LyraGame", "LyraEditor" });
 
 		if (!bBuildAllModules)
 		{

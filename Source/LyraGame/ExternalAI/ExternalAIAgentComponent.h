@@ -3,13 +3,11 @@
 #pragma once
 
 #include "Components/ActorComponent.h"
-#include "ExternalAI/ExternalAITypes.h"
+#include "ExternalAI/ExternalAIProto.h"
 
 #include "ExternalAIAgentComponent.generated.h"
 
 class UExternalAIWorldSubsystem;
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FExternalAICommandReceived, const FExternalAICommand&, Command);
 
 /**
  * Endpoint for commands routed to an AI controller by the external AI subsystem.
@@ -30,15 +28,7 @@ public:
 	int64 GetAgentId() const { return AgentId; }
 
 	/** Called by the subsystem on the game thread after routing and freshness checks. */
-	void HandleExternalCommand(const FExternalAICommand& Command);
-
-	UPROPERTY(BlueprintAssignable, Category = "External AI")
-	FExternalAICommandReceived OnCommandReceived;
-
-protected:
-	/** Override in Blueprint to translate a transport command into a game action. */
-	UFUNCTION(BlueprintImplementableEvent, Category = "External AI", meta = (DisplayName = "Handle External AI Command"))
-	void K2_HandleExternalCommand(const FExternalAICommand& Command);
+	virtual void HandleExternalCommand(const lyra::external_ai::v1::AgentCommand& Command);
 
 private:
 	friend UExternalAIWorldSubsystem;

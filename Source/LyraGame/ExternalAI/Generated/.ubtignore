@@ -1,0 +1,2 @@
+Generated protobuf implementation sources use .cc.inc and are compiled through
+ExternalAIProtobufGenerated.cpp, not as standalone UBT source files.

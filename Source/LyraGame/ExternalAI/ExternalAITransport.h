@@ -2,8 +2,9 @@
 
 #pragma once
 
-#include "ExternalAI/ExternalAITypes.h"
-#include "Templates/Function.h"
+#include "Containers/UnrealString.h"
+#include "ExternalAI/ExternalAIProto.h"
+#include "Templates/UniquePtr.h"
 
 struct FExternalAITransportConfig
 {
@@ -25,13 +26,8 @@ public:
 	virtual void Stop() = 0;
 	virtual bool IsConnected() const = 0;
 
-	virtual void SendWorldState(FExternalAIWorldState&& WorldState) = 0;
-	virtual bool DequeueCommand(FExternalAICommandBatch& OutCommands) = 0;
+	virtual void SendWorldState(lyra::external_ai::v1::WorldState&& WorldState) = 0;
+	virtual bool DequeueCommand(lyra::external_ai::v1::AgentCommandBatch& OutCommands) = 0;
 };
 
-using FExternalAITransportFactory = TFunction<TUniquePtr<IExternalAITransport>()>;
-
-/** Installed by the transport module during startup. */
-LYRAGAME_API void RegisterExternalAITransportFactory(FExternalAITransportFactory InFactory);
-LYRAGAME_API void UnregisterExternalAITransportFactory();
 LYRAGAME_API TUniquePtr<IExternalAITransport> CreateExternalAITransport();

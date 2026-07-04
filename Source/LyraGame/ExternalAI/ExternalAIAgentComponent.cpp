@@ -3,6 +3,7 @@
 #include "ExternalAI/ExternalAIAgentComponent.h"
 
 #include "ExternalAI/ExternalAIWorldSubsystem.h"
+#include "Engine/World.h"
 #include "GameFramework/Actor.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(ExternalAIAgentComponent)
@@ -40,13 +41,10 @@ void UExternalAIAgentComponent::EndPlay(const EEndPlayReason::Type EndPlayReason
 	Super::EndPlay(EndPlayReason);
 }
 
-void UExternalAIAgentComponent::HandleExternalCommand(const FExternalAICommand& Command)
+void UExternalAIAgentComponent::HandleExternalCommand(const lyra::external_ai::v1::AgentCommand& Command)
 {
 	check(IsInGameThread());
-	check(Command.AgentId == AgentId);
-
-	OnCommandReceived.Broadcast(Command);
-	K2_HandleExternalCommand(Command);
+	check(Command.agent_id() == AgentId);
 }
 
 void UExternalAIAgentComponent::AssignAgentId(int64 NewAgentId)

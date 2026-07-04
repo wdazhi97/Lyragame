@@ -3,7 +3,12 @@
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
 
-#include "Generated/external_ai.grpc.pb.h"
+// Protobuf/Abseil headers contain methods named `verify`; keep Unreal's macro
+// from expanding while including the generated gRPC/protobuf headers.
+#pragma push_macro("verify")
+#undef verify
+#include "ExternalAI/Generated/external_ai.grpc.pb.h"
+#pragma pop_macro("verify")
 
 #include "ExternalAI/ExternalAITransport.h"
 #include "HAL/Event.h"
@@ -33,7 +38,7 @@ public:
 	}
 
 	void Start(ExternalAIProto::ExternalAIService::Stub& Stub);
-	void EnqueueWorldState(const FExternalAIWorldState& WorldState);
+	void EnqueueWorldState(ExternalAIProto::WorldState&& WorldState);
 	void StopExternalOperations();
 
 private:
@@ -115,7 +120,7 @@ public:
 		Channel.reset();
 		bConnected.store(false);
 
-		FExternalAICommandBatch Discarded;
+		ExternalAIProto::AgentCommandBatch Discarded;
 		while (ReceivedCommands.Dequeue(Discarded))
 		{
 		}
@@ -126,7 +131,7 @@ public:
 		return bConnected.load();
 	}
 
-	void SendWorldState(FExternalAIWorldState&& WorldState) override
+	void SendWorldState(ExternalAIProto::WorldState&& WorldState) override
 	{
 		check(IsInGameThread());
 
@@ -138,11 +143,11 @@ public:
 		std::lock_guard<std::mutex> Guard(ReactorMutex);
 		if (ActiveReactor)
 		{
-			ActiveReactor->EnqueueWorldState(WorldState);
+			ActiveReactor->EnqueueWorldState(MoveTemp(WorldState));
 		}
 	}
 
-	bool DequeueCommand(FExternalAICommandBatch& OutCommands) override
+	bool DequeueCommand(ExternalAIProto::AgentCommandBatch& OutCommands) override
 	{
 		return ReceivedCommands.Dequeue(OutCommands);
 	}
@@ -154,31 +159,8 @@ public:
 			return;
 		}
 
-		FExternalAICommandBatch Batch;
-		Batch.Commands.Reserve(Message.commands().commands_size());
-
-		for (const ExternalAIProto::AgentCommand& ProtoCommand : Message.commands().commands())
-		{
-			FExternalAICommand& Command = Batch.Commands.AddDefaulted_GetRef();
-			Command.AgentId = ProtoCommand.agent_id();
-			Command.Sequence = ProtoCommand.sequence();
-			Command.BasedOnSnapshotId = ProtoCommand.based_on_snapshot_id();
-			Command.CommandType = FName(UTF8_TO_TCHAR(ProtoCommand.command_type().c_str()));
-
-			Command.ContinuousValues.Reserve(ProtoCommand.continuous_values_size());
-			for (const float Value : ProtoCommand.continuous_values())
-			{
-				Command.ContinuousValues.Add(Value);
-			}
-
-			Command.DiscreteValues.Reserve(ProtoCommand.discrete_values_size());
-			for (const int32 Value : ProtoCommand.discrete_values())
-			{
-				Command.DiscreteValues.Add(Value);
-			}
-		}
-
-		if (!Batch.Commands.IsEmpty())
+		ExternalAIProto::AgentCommandBatch Batch = Message.commands();
+		if (Batch.commands_size() > 0)
 		{
 			ReceivedCommands.Enqueue(MoveTemp(Batch));
 		}
@@ -243,7 +225,7 @@ private:
 
 	std::shared_ptr<grpc::Channel> Channel;
 	std::unique_ptr<ExternalAIProto::ExternalAIService::Stub> Stub;
-	TQueue<FExternalAICommandBatch, EQueueMode::Mpsc> ReceivedCommands;
+	TQueue<ExternalAIProto::AgentCommandBatch, EQueueMode::Mpsc> ReceivedCommands;
 	std::mutex ReactorMutex;
 	FExternalAIStreamReactor* ActiveReactor = nullptr;
 	FEvent* ReactorDoneEvent = nullptr;
@@ -267,7 +249,7 @@ void FExternalAIStreamReactor::Start(ExternalAIProto::ExternalAIService::Stub& S
 	StartCall();
 }
 
-void FExternalAIStreamReactor::EnqueueWorldState(const FExternalAIWorldState& WorldState)
+void FExternalAIStreamReactor::EnqueueWorldState(ExternalAIProto::WorldState&& WorldState)
 {
 	if (!bAcceptingExternalWrites.load())
 	{
@@ -275,28 +257,7 @@ void FExternalAIStreamReactor::EnqueueWorldState(const FExternalAIWorldState& Wo
 	}
 
 	ExternalAIProto::EnvironmentMessage Message;
-	ExternalAIProto::WorldState* ProtoWorld = Message.mutable_world_state();
-	ProtoWorld->set_snapshot_id(WorldState.SnapshotId);
-	ProtoWorld->set_server_time_seconds(WorldState.ServerTimeSeconds);
-
-	for (const FExternalAIAgentState& Agent : WorldState.Agents)
-	{
-		ExternalAIProto::AgentState* ProtoAgent = ProtoWorld->add_agents();
-		ProtoAgent->set_agent_id(Agent.AgentId);
-		ProtoAgent->set_team_id(Agent.TeamId);
-		ProtoAgent->set_has_controlled_pawn(Agent.bHasControlledPawn);
-
-		ProtoAgent->mutable_location()->set_x(Agent.Location.X);
-		ProtoAgent->mutable_location()->set_y(Agent.Location.Y);
-		ProtoAgent->mutable_location()->set_z(Agent.Location.Z);
-		ProtoAgent->mutable_rotation()->set_pitch(Agent.Rotation.Pitch);
-		ProtoAgent->mutable_rotation()->set_yaw(Agent.Rotation.Yaw);
-		ProtoAgent->mutable_rotation()->set_roll(Agent.Rotation.Roll);
-		ProtoAgent->mutable_velocity()->set_x(Agent.Velocity.X);
-		ProtoAgent->mutable_velocity()->set_y(Agent.Velocity.Y);
-		ProtoAgent->mutable_velocity()->set_z(Agent.Velocity.Z);
-	}
-
+	Message.mutable_world_state()->Swap(&WorldState);
 	EnqueueMessage(MoveTemp(Message));
 }
 
