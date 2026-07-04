@@ -10,7 +10,10 @@ public class LyraEditorTarget : TargetRules
 		DefaultBuildSettings = BuildSettingsVersion.V6;
 
 		Type = TargetType.Editor;
-		ExtraModuleNames.AddRange(new string[] { "LyraGame", "LyraEditor" });
+		// Linux server cooking runs in UnrealEditor-Cmd and loads ServerOnly
+		// project modules for the target platform. Build the server runtime
+		// module into the editor target so the cook host can load it.
+		ExtraModuleNames.AddRange(new string[] { "LyraGame", "LyraEditor", "ExternalAIGrpcRuntime" });
 
 		if (!bBuildAllModules)
 		{
